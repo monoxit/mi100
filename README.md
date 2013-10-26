@@ -31,26 +31,34 @@ The below example shows that pairing is done between a Windows device and MI100,
 	  res = mi100.ping
 	
 	  # Get battery level
-	  res = mi100.getPowerLevel
+	  res = mi100.power
 	  puts res
 	
 	  # Move forward 300mS
-	  res = mi100.move "forward", 300
+	  mi100.move "forward", 300
 	
 	  # Move backward 300mS
-	  res = mi100.move "backward", 300
+	  mi100.move "backward", 300
 	
 	  # Spin right 500mS
-	  res = mi100.spin "right", 500
+	  mi100.spin "right", 500
 	
 	  # Spin left 500mS
-	  res = mi100.spin "left", 500
+	  mi100.spin "left", 500
 	
-	  # Blink 100% red, 50% green, 20% blue 1000mS
-	  res = mi100.blink 100, 50, 20, 1000
+	  # Blink LED 100% red, 50% green, 20% blue 1000mS
+	  mi100.blink 100, 50, 20, 1000
+	  
+	  # LED random color blink 
+	  mi100.blink
 	  
 	  # Tone 440Hz 200mS
-	  res = mi100.tone 440, 200
+	  mi100.tone 440, 200
+	  
+	  # Do Re Mi
+	  mi100.sound "DO"
+	  mi100.sound "RE"
+	  mi100.sound "MI"
 	
 	  sleep 1
 	end
