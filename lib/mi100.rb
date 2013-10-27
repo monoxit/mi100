@@ -90,15 +90,17 @@ class Mi100
   end
   
   def good
-    tone 880, 300
-    sleep 0.4
-    tone 440, 300
-    sleep 0.4
+    tone 440, 100
+    sleep 0.2
+    tone 880, 100
+    sleep 0.2
+    tone 1760, 100
+    sleep 0.2
   end
   
   def bad
-    tone 100, 300
-    sleep 0.4
+    tone 100, 400
+    sleep 0.5
   end
   
   # Private methods
