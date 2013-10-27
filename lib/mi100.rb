@@ -6,13 +6,17 @@ class Mi100
   CMD_GET_POWER_LEVEL = "H"
   CMD_STOP            = "S"
   CMD_MOVE_FORWARD    = "F"
-  CMD_MOVE_BACKWORD   = "B"
+  CMD_MOVE_BACKWARD   = "B"
   CMD_SPIN_RIGHT      = "R"
   CMD_SPIN_LEFT       = "L"
   CMD_BLINK_LED       = "D"
   CMD_TONE            = "T"
   
-  DEFAULT_DURATION        = 300
+  DEFAULT_MOVE_DURATION   = 300
+  DEFAULT_SPIN_DURATION   = 200
+  DEFAULT_BLINK_DURATION  = 600
+  DEFAULT_TONE_DURATION   = 300
+  
   DEFAULT_MOVE_DIRECTION  = "FORWARD"
   DEFAULT_SPIN_DIRECTION  = "RIGHT"
   
@@ -42,19 +46,35 @@ class Mi100
     v.round 2
   end
   
-  def move(direction = DEFAULT_MOVE_DIRECTION, duration = DEFAULT_DURATION)
+  def move(direction = DEFAULT_MOVE_DIRECTION, duration = DEFAULT_MOVE_DURATION)
     cmd = direction.upcase == "BACKWARD" ? CMD_MOVE_BACKWARD : CMD_MOVE_FORWARD
     sendln cmd + "," + duration.to_s
     acked? cmd
   end
   
-  def spin(direction = DEFAULT_SPIN_DIRECTION, duration = DEFAULT_DURATION)
+  def movef(duration = DEFAULT_MOVE_DURATION)
+    move "FORWARD", duration
+  end
+  
+  def moveb(duration = DEFAULT_MOVE_DURATION)
+    move "BACKWARD", duration
+  end
+  
+  def spin(direction = DEFAULT_SPIN_DIRECTION, duration = DEFAULT_SPIN_DURATION)
     cmd = direction.upcase == "LEFT" ? CMD_SPIN_LEFT : CMD_SPIN_RIGHT
     sendln cmd + "," + duration.to_s
     acked? cmd
   end
   
-  def blink(r = 0, g = 0, b = 0, duration = DEFAULT_DURATION * 2)
+  def spinr(duration = DEFAULT_SPIN_DURATION)
+    spin "RIGHT", duration
+  end
+  
+  def spinl(duration = DEFAULT_SPIN_DURATION)
+    spin "LEFT" , duration
+  end
+  
+  def blink(r = 0, g = 0, b = 0, duration = DEFAULT_BLINK_DURATION)
     if r + g + b == 0
       r = rand(100)+1
       g = rand(100)+1
@@ -69,7 +89,7 @@ class Mi100
     acked? cmd
   end
   
-  def tone(frequency = 0, duration = DEFAULT_DURATION)
+  def tone(frequency = 0, duration = DEFAULT_TONE_DURATION)
     frequency = rand(4186 - 28) + 28 if frequency < 28
     cmd = CMD_TONE
     sendln cmd + "," + frequency.to_s + "," + duration.to_s
@@ -82,7 +102,7 @@ class Mi100
     acked? cmd
   end
   
-  def sound(pitch = nil, duration = DEFAULT_DURATION)
+  def sound(pitch = nil, duration = DEFAULT_TONE_DURATION)
     pitch ||= FREQUENCY.keys[rand(FREQUENCY.size)].to_s
     tone FREQUENCY[pitch.upcase.to_sym], duration
     duration+=100
@@ -91,16 +111,16 @@ class Mi100
   
   def good
     tone 440, 100
-    sleep 0.2
+    sleep 0.1
     tone 880, 100
-    sleep 0.2
+    sleep 0.1
     tone 1760, 100
-    sleep 0.2
+    sleep 0.1
   end
   
   def bad
     tone 100, 400
-    sleep 0.5
+    sleep 0.4
   end
   
   # Private methods
