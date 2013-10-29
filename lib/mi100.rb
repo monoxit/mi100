@@ -13,7 +13,7 @@ class Mi100
   CMD_TONE            = "T"
   
   DEFAULT_MOVE_DURATION   = 300
-  DEFAULT_SPIN_DURATION   = 200
+  DEFAULT_SPIN_DURATION   = 140
   DEFAULT_BLINK_DURATION  = 600
   DEFAULT_TONE_DURATION   = 300
   
@@ -145,14 +145,18 @@ class Mi100
   end
   
   def recieveln
-    stime = Time.now
-    str = ""
-    while (Time.now - stime) * 1000.0 < @sp.read_timeout do
-      c = @sp.read 1
-      if c.length > 0
-        str += c
-        break if c == "\n"
+    if is_windows?
+      stime = Time.now
+      str = ""
+      while (Time.now - stime) * 1000.0 < @sp.read_timeout do
+        c = @sp.read 1
+        if c.length > 0
+          str += c
+          break if c == "\n"
+        end
       end
+    else
+      str = @sp.readline
     end
     str
   end
