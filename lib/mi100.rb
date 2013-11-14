@@ -2,6 +2,9 @@ require "mi100/version"
 
 class Mi100
 
+  DEFAULT_RETRIES     = 3
+  READ_TIMEOUT        = 5000
+
   CMD_PING            = "H"
   CMD_GET_POWER_LEVEL = "H"
   CMD_STOP            = "S"
@@ -23,11 +26,20 @@ class Mi100
   FREQUENCY = {DO: 262, RE: 294, MI: 330, FA: 349, SO: 392, LA: 440, SI: 494, HDO: 523}
   
   def initialize(dev)
-    initialize_serialport dev
+    retries_left = DEFAULT_RETRIES
+    begin
+      initialize_serialport dev
+    rescue Errno::ENOENT
+      puts retries_left
+      retries_left -= 1
+      retry unless retries_left < 0
+      raise
+    end
   end
   
   def close
-    stop
+    #stop
+    sleep 2
     @sp.close
   end
   
@@ -130,8 +142,8 @@ class Mi100
     require 'serialport'
     @sp = SerialPort.new dev, 38400, 8, 1, SerialPort::NONE
     if is_windows?
-      @sp.read_timeout=5000
-      @sp.write_timeout=0
+      @sp.read_timeout = READ_TIMEOUT
+      @sp.write_timeout = 0
     end
   end
   
@@ -148,7 +160,7 @@ class Mi100
     if is_windows?
       stime = Time.now
       str = ""
-      while (Time.now - stime) * 1000.0 < @sp.read_timeout do
+      while (Time.now - stime) * 1000.0 < READ_TIMEOUT do
         c = @sp.read 1
         if c.length > 0
           str += c
