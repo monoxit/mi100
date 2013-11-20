@@ -117,8 +117,7 @@ class Mi100
   def sound(pitch = nil, duration = DEFAULT_TONE_DURATION)
     pitch ||= FREQUENCY.keys[rand(FREQUENCY.size)].to_s
     tone FREQUENCY[pitch.upcase.to_sym], duration
-    duration+=100
-    sleep duration / 1000
+    sleep duration.to_f / 1000.0
   end
   
   def good
