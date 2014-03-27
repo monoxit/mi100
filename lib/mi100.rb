@@ -1,9 +1,10 @@
-require "mi100/version"
+require 'mi100/version'
+require 'mi100/morsecoder'
 require 'timeout'
 
 class Mi100
 
-  DEFAULT_RETRIES     = 3
+  DEFAULT_RETRIES     = 5
   READ_TIMEOUT        = 5000
   WRITE_TIMEOUT       = 5000
   SHORT_READ_TIMEOUT  = 1
@@ -34,11 +35,15 @@ class Mi100
     begin
       initialize_serialport dev
     rescue Errno::ENOENT
-      puts retries_left
+      puts "Retry Bluetooth connection: #{retries_left.to_s}"
       retries_left -= 1
       retry unless retries_left < 0
+      puts "Bluetooth connection failed."
       raise
     end
+    
+    @morsecoder = Morsecoder.new
+    
   end
   
   def close
@@ -63,28 +68,28 @@ class Mi100
   
   def move(direction = DEFAULT_MOVE_DIRECTION, duration = DEFAULT_MOVE_DURATION)
     cmd = direction.upcase == "BACKWARD" ? CMD_MOVE_BACKWARD : CMD_MOVE_FORWARD
-    send_command_get_response cmd + "," + duration.to_s
+    send_command_get_response "#{cmd},#{duration.to_s}"
   end
   
   def spin(direction = DEFAULT_SPIN_DIRECTION, duration = DEFAULT_SPIN_DURATION)
     cmd = direction.upcase == "LEFT" ? CMD_SPIN_LEFT : CMD_SPIN_RIGHT
-    send_command_get_response cmd + "," + duration.to_s
+    send_command_get_response "#{cmd},#{duration.to_s}"
   end  
   
   def move_forward(duration)
-    send_command_get_response CMD_MOVE_FORWARD + "," + duration.to_s
+    send_command_get_response "#{CMD_MOVE_FORWARD},#{duration.to_s}"
   end
   
   def move_backward(duration)
-    send_command_get_response CMD_MOVE_BACKWARD + "," + duration.to_s
+    send_command_get_response "#{CMD_MOVE_BACKWARD},#{duration.to_s}"
   end
   
   def spin_right(duration)
-    send_command_get_response CMD_SPIN_RIGHT + "," + duration.to_s
+    send_command_get_response "#{CMD_SPIN_RIGHT},#{duration.to_s}"
   end
   
   def spin_left(duration)
-    send_command_get_response CMD_SPIN_LEFT + "," + duration.to_s
+    send_command_get_response "#{CMD_SPIN_LEFT},#{duration.to_s}"
   end
   
   def movef(duration = DEFAULT_MOVE_DURATION)
@@ -104,65 +109,90 @@ class Mi100
   end
   
   def move_forward!(duration)
-    sendln CMD_MOVE_FORWARD + "," + duration.to_s
+    sendln "#{CMD_MOVE_FORWARD},#{duration.to_s}"
   end
   
   def move_backward!(duration)
-    sendln CMD_MOVE_BACKWARD + "," + duration.to_s
+    sendln "#{CMD_MOVE_BACKWARD},#{duration.to_s}"
   end
   
   def spin_right!(duration)
-    sendln CMD_SPIN_RIGHT + "," + duration.to_s
+    sendln "#{CMD_SPIN_RIGHT},#{duration.to_s}"
   end
   
   def spin_left!(duration)
-    sendln CMD_SPIN_LEFT + "," + duration.to_s
+    sendln "#{CMD_SPIN_LEFT},#{duration.to_s}"
   end
   
-  def blink(r = 0, g = 0, b = 0, duration = DEFAULT_BLINK_DURATION)
-  
-    if r + g + b == 0
-      r = rand(100)+1
-      g = rand(100)+1
-      b = rand(100)+1
-    end
-    
-    r = r <= 100 ? r : 100
-    g = g <= 100 ? g : 100
-    b = b <= 100 ? b : 100
-    
-    send_command_get_response CMD_BLINK_LED + "," + r.to_s + "," + g.to_s + "," + b.to_s + "," + duration.to_s
+  def blink(r = nil, g = nil, b = nil, duration = DEFAULT_BLINK_DURATION)
+    r ||= rand(100)+1
+    g ||= rand(100)+1
+    b ||= rand(100)+1
+    r = 100 if r > 100
+    g = 100 if g > 100
+    b = 100 if b > 100
+    send_command_get_response "#{CMD_BLINK_LED},#{r.to_s},#{g.to_s},#{b.to_s},#{duration.to_s}"
   end
 
   def stop
     send_command_get_response CMD_STOP
   end
   
-  
-  def tone(frequency = 0, duration = DEFAULT_TONE_DURATION)
-    frequency = rand(4186 - 28) + 28 if frequency < 28
-    send_command_get_response CMD_TONE + "," + frequency.to_s + "," + duration.to_s
+  def tone(frequency = nil, duration = DEFAULT_TONE_DURATION)
+    frequency ||= rand(4186 - 28) + 28
+    frequency = 4186 if frequency > 4186
+    frequency = 28 if frequency < 28
+    send_command_get_response "#{CMD_TONE},#{frequency.to_s},#{duration.to_s}"
   end
   
-
-  def sound(pitch = nil, duration = DEFAULT_TONE_DURATION)
-    pitch ||= FREQUENCY.keys[rand(FREQUENCY.size)].to_s
-    tone FREQUENCY[pitch.upcase.to_sym], duration
+  def sound(pitch = "?", duration = DEFAULT_TONE_DURATION)
+  
+    if pitch.instance_of?(String)
+      pitch = FREQUENCY.keys[rand(FREQUENCY.size)].to_s if pitch == "?"
+      frequency = FREQUENCY[pitch.upcase.to_sym]
+    else
+      frequency = pitch
+    end
+    
+    tone frequency, duration if frequency
     sleep duration.to_f / 1000.0
   end
   
   def good
-    tone 440, 100
-    sleep 0.1
-    tone 880, 100
-    sleep 0.1
-    tone 1760, 100
-    sleep 0.1
+    freqs = [440,880,1760]
+    duration = 100.0
+    freqs.each do |freq|
+      tone freq, duration
+      sleep duration / 1000.0
+    end
   end
   
   def bad
-    tone 100, 400
-    sleep 0.4
+    duration = 400.0
+    freq = 100
+    tone freq, duration
+    sleep duration / 1000.0
+  end
+  
+  def talk(str)
+    morsecode = @morsecoder.to_morse(str)
+    morsecode.each {|code| sound(code[:frequency],code[:duration])}
+  end
+  
+  def morsefrequency
+    @morsecoder.morsefrequency
+  end
+  
+  def morsefrequency=(frequency)
+    @morsecoder.morsefrequency = frequency
+  end
+  
+  def morseunit
+    @morsecoder.morseunit
+  end
+  
+  def morseunit=(millisec)
+    @morsecoder.morseunit = millisec
   end
   
   # Private methods
@@ -199,10 +229,9 @@ class Mi100
   
   def empty_receive_buffer
     @sp.read_timeout = SHORT_READ_TIMEOUT
-    char = @sp.read 1
-    while char.length > 0
+    begin
       char = @sp.read 1
-    end
+    end while char && char.length > 0
     @sp.read_timeout = READ_TIMEOUT
   end
   
@@ -218,7 +247,7 @@ class Mi100
         end
       end
     else
-      str = @sp.readline
+      str = @sp.gets
     end
     str
   end
