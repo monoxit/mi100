@@ -6,11 +6,12 @@
 
 class Mi100
     class Morsecoder
-    
-      attr_accessor :morseunit, :morsefrequency
-    
-      DEFAULT_MORSEUNIT_MILLIS = 50
-      DEFAULT_MORSEFREQUENCY = 4000
+      
+      DEFAULT_MORSE_UNIT_MILLIS = 50
+      DEFAULT_MORSE_FREQUENCY   = 4000
+      DEFAULT_LETTER_SPACE_DOTS = 3
+      DEFAULT_WORD_SPACE_DOTS   = 7
+      
       MORSECODE = { 
                     "1" => [1,3,3,3,3],
                     "2" => [1,1,3,3,3],
@@ -58,28 +59,63 @@ class Mi100
                     "(" => [3,1,3,3,1],
                     ")" => [3,1,3,3,1,3]
                   }
-  
-      def initialize
-        @morseunit = DEFAULT_MORSEUNIT_MILLIS
-        @morsefrequency = DEFAULT_MORSEFREQUENCY
-      end
-    
-      def to_morse(str)
-        morsecode = []
-        str.split(//).each do |char|
-          code = MORSECODE[char.upcase]
-          if code
-            code.each do |dots|
-              morsecode << {frequency: @morsefrequency, duration: @morseunit * dots}
-              morsecode << {frequency: false, duration: @morseunit * dots}
+                  
+      
+      @default_unit = DEFAULT_MORSE_UNIT_MILLIS
+      @default_frequency = DEFAULT_MORSE_FREQUENCY
+      @default_letter_space = DEFAULT_LETTER_SPACE_DOTS
+      @default_word_space = DEFAULT_WORD_SPACE_DOTS
+      
+      class << self
+      
+        attr_accessor :default_unit, :default_frequency
+        
+        def to_morse_from(the_str, frequency = @default_frequency, unit = @default_unit)
+          letter_space = @default_letter_space
+          word_space = @default_word_space
+          morsecode = []
+
+          the_str.to_s.split(//).each do |char|
+            code = MORSECODE[char.upcase]
+            if code
+              code.each do |dots|
+                morsecode << {frequency: frequency, duration: unit * dots}
+                morsecode << {frequency: false, duration: unit * dots}
+              end
+              morsecode << {frequency: false, duration: unit * letter_space}
+            else
+              morsecode << {frequency: false, duration: unit * word_space}
             end
-            morsecode << {frequency: false, duration: morseunit * 3}
-          else
-            morsecode << {frequency: false, duration: morseunit * 7}
           end
+          
+          morsecode
         end
-        morsecode
+        
+        def reset
+          @default_unit = DEFAULT_MORSE_UNIT_MILLIS
+          @default_frequency = DEFAULT_MORSE_FREQUENCY
+          @default_letter_space = DEFAULT_LETTER_SPACE_DOTS
+          @default_word_space = DEFAULT_WORD_SPACE_DOTS
+        end
+        
       end
       
+      attr_accessor :str, :unit, :frequency
+      
+      def initialize(str="HELLO WORLD", frequency = Morsecoder.default_frequency, unit=Morsecoder.default_unit)
+        @str = str
+        @frequency = frequency
+        @unit = unit
+      end
+      
+      def to_morse
+        frequency = @frequency
+        unit = @unit
+        Morsecoder.to_morse_from(@str, frequency, unit)
+      end
+      
+      def each
+        to_morse.each {|code| yield(code[:frequency], code[:duration])}
+      end
     end
 end

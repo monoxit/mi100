@@ -1,3 +1,9 @@
+# mi100.rb
+# Copyright (c) 2014 Masami Yamakawa
+# 
+# This software is released under the MIT License.
+# http://opensource.org/lisenses/mit-license.php
+
 require 'mi100/version'
 require 'mi100/morsecoder'
 require 'timeout'
@@ -28,7 +34,30 @@ class Mi100
   DEFAULT_MOVE_DIRECTION  = "FORWARD"
   DEFAULT_SPIN_DIRECTION  = "RIGHT"
   
-  FREQUENCY = {DO: 262, RE: 294, MI: 330, FA: 349, SO: 392, LA: 440, SI: 494, HDO: 523}
+  FREQUENCY = { DO:   262,
+                DOS:  277,
+                RE:   294,
+                RES:  311,
+                MI:   330,
+                FA:   349,
+                FAS:  370,
+                SO:   392,
+                SOS:  415,
+                LA:   440,
+                LAS:  466,
+                SI:   494,
+                HDO:  523,
+                HDOS: 554,
+                HRE:  587,
+                HRES: 622,
+                HMI:  659,
+                HFA:  698,
+                HFAS: 740,
+                HSO:  784,
+                HSOS: 831,
+                HLA:  880,
+                HSI:  988,
+              }
   
   def initialize(dev)
     retries_left = DEFAULT_RETRIES
@@ -41,8 +70,6 @@ class Mi100
       puts "Bluetooth connection failed."
       raise
     end
-    
-    @morsecoder = Morsecoder.new
     
   end
   
@@ -175,24 +202,24 @@ class Mi100
   end
   
   def talk(str)
-    morsecode = @morsecoder.to_morse(str)
-    morsecode.each {|code| sound(code[:frequency],code[:duration])}
+    morsecoder = Morsecoder.new str
+    morsecoder.each {|frequency, duration| sound(frequency,duration)}
   end
   
-  def morsefrequency
-    @morsecoder.morsefrequency
+  def morse_frequency
+    Morsecoder.default_frequency
   end
   
-  def morsefrequency=(frequency)
-    @morsecoder.morsefrequency = frequency
+  def morse_frequency=(frequency)
+    Morsecoder.default_frequency = frequency
   end
   
-  def morseunit
-    @morsecoder.morseunit
+  def morse_unit
+    Morsecoder.default_unit
   end
   
-  def morseunit=(millisec)
-    @morsecoder.morseunit = millisec
+  def morse_unit=(millisec)
+    Morsecoder.default_unit = millisec
   end
   
   # Private methods
