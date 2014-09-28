@@ -124,6 +124,14 @@ class Mi100
     send_command_get_response "#{CMD_SPIN_LEFT},#{duration.to_s}"
   end
 
+  def turn_right(duration)
+    send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
+  end
+
+  def turn_left(duration)
+    send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
+  end
+
   def movef(duration = DEFAULT_MOVE_DURATION)
     move_forward duration
   end
@@ -156,12 +164,12 @@ class Mi100
     sendln "#{CMD_SPIN_LEFT},#{duration.to_s}"
   end
 
-  def turn_right(duration)
-    send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
+  def turn_right!(duration)
+    sendln "#{CMD_TURN_RIGHT},#{duration.to_s}"
   end
 
-  def turn_left(duration)
-    send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
+  def turn_left!(duration)
+    sendln "#{CMD_TURN_LEFT},#{duration.to_s}"
   end
 
   def speed(pwm_value = DEFAULT_SPEED)
