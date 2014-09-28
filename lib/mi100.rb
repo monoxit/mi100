@@ -1,6 +1,6 @@
 # mi100.rb
 # Copyright (c) 2014 Masami Yamakawa
-# 
+#
 # This software is released under the MIT License.
 # http://opensource.org/lisenses/mit-license.php
 
@@ -25,15 +25,20 @@ class Mi100
   CMD_BLINK_LED       = "D"
   CMD_TONE            = "T"
   CMD_GET_LIGHT       = "P"
-  
+  CMD_TURN_RIGHT      = "U"
+  CMD_TURN_LEFT       = "A"
+  CMD_SET_SPEED       = "W"
+  CMD_FREE_RAM        = "M"
+
+  DEFAULT_SPEED           = 1023
   DEFAULT_MOVE_DURATION   = 300
   DEFAULT_SPIN_DURATION   = 140
   DEFAULT_BLINK_DURATION  = 600
   DEFAULT_TONE_DURATION   = 300
-  
+
   DEFAULT_MOVE_DIRECTION  = "FORWARD"
   DEFAULT_SPIN_DIRECTION  = "RIGHT"
-  
+
   FREQUENCY = { DO:   262,
                 DOS:  277,
                 RE:   294,
@@ -58,7 +63,7 @@ class Mi100
                 HLA:  880,
                 HSI:  988,
               }
-  
+
   def initialize(dev)
     retries_left = DEFAULT_RETRIES
     begin
@@ -70,87 +75,103 @@ class Mi100
       puts "Bluetooth connection failed."
       raise
     end
-    
+
   end
-  
+
   def close
     sleep 2
     @sp.close
   end
-  
+
   def ping
     send_command_get_response CMD_PING
   end
-  
+
   def power
     response = send_command_get_response CMD_GET_POWER_LEVEL
     voltage = response[1].to_i / 1000.0
     voltage.round 2
   end
-  
+
   def light
     response = send_command_get_response CMD_GET_LIGHT
     response[1].to_i
   end
-  
+
   def move(direction = DEFAULT_MOVE_DIRECTION, duration = DEFAULT_MOVE_DURATION)
     cmd = direction.upcase == "BACKWARD" ? CMD_MOVE_BACKWARD : CMD_MOVE_FORWARD
     send_command_get_response "#{cmd},#{duration.to_s}"
   end
-  
+
   def spin(direction = DEFAULT_SPIN_DIRECTION, duration = DEFAULT_SPIN_DURATION)
     cmd = direction.upcase == "LEFT" ? CMD_SPIN_LEFT : CMD_SPIN_RIGHT
     send_command_get_response "#{cmd},#{duration.to_s}"
-  end  
-  
+  end
+
   def move_forward(duration)
     send_command_get_response "#{CMD_MOVE_FORWARD},#{duration.to_s}"
   end
-  
+
   def move_backward(duration)
     send_command_get_response "#{CMD_MOVE_BACKWARD},#{duration.to_s}"
   end
-  
+
   def spin_right(duration)
     send_command_get_response "#{CMD_SPIN_RIGHT},#{duration.to_s}"
   end
-  
+
   def spin_left(duration)
     send_command_get_response "#{CMD_SPIN_LEFT},#{duration.to_s}"
   end
-  
+
   def movef(duration = DEFAULT_MOVE_DURATION)
     move_forward duration
   end
-  
+
   def moveb(duration = DEFAULT_MOVE_DURATION)
     move_backward duration
   end
-  
+
   def spinr(duration = DEFAULT_SPIN_DURATION)
     spin_right duration
   end
-  
+
   def spinl(duration = DEFAULT_SPIN_DURATION)
     spin_left duration
   end
-  
+
   def move_forward!(duration)
     sendln "#{CMD_MOVE_FORWARD},#{duration.to_s}"
   end
-  
+
   def move_backward!(duration)
     sendln "#{CMD_MOVE_BACKWARD},#{duration.to_s}"
   end
-  
+
   def spin_right!(duration)
     sendln "#{CMD_SPIN_RIGHT},#{duration.to_s}"
   end
-  
+
   def spin_left!(duration)
     sendln "#{CMD_SPIN_LEFT},#{duration.to_s}"
   end
-  
+
+  def turn_right(duration)
+    send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
+  end
+
+  def turn_left(duration)
+    send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
+  end
+
+  def speed(pwm_value = DEFAULT_SPEED)
+    send_command_get_response "#{CMD_SET_SPEED},#{pwm_value.to_s}"
+  end
+
+  def free_ram
+    send_command_get_response "#{CMD_FREE_RAM}"
+  end
+
   def blink(r = nil, g = nil, b = nil, duration = DEFAULT_BLINK_DURATION)
     r ||= rand(100)+1
     g ||= rand(100)+1
@@ -164,27 +185,27 @@ class Mi100
   def stop
     send_command_get_response CMD_STOP
   end
-  
+
   def tone(frequency = nil, duration = DEFAULT_TONE_DURATION)
     frequency ||= rand(4186 - 28) + 28
     frequency = 4186 if frequency > 4186
     frequency = 28 if frequency < 28
     send_command_get_response "#{CMD_TONE},#{frequency.to_s},#{duration.to_s}"
   end
-  
+
   def sound(pitch = "?", duration = DEFAULT_TONE_DURATION)
-  
+
     if pitch.instance_of?(String)
       pitch = FREQUENCY.keys[rand(FREQUENCY.size)].to_s if pitch == "?"
       frequency = FREQUENCY[pitch.upcase.to_sym]
     else
       frequency = pitch
     end
-    
+
     tone frequency, duration if frequency
     sleep duration.to_f / 1000.0
   end
-  
+
   def good
     freqs = [440,880,1760]
     duration = 100.0
@@ -193,38 +214,38 @@ class Mi100
       sleep duration / 1000.0
     end
   end
-  
+
   def bad
     duration = 400.0
     freq = 100
     tone freq, duration
     sleep duration / 1000.0
   end
-  
+
   def talk(str)
     morsecoder = Morsecoder.new str
     morsecoder.each {|frequency, duration| sound(frequency,duration)}
   end
-  
+
   def morse_frequency
     Morsecoder.default_frequency
   end
-  
+
   def morse_frequency=(frequency)
     Morsecoder.default_frequency = frequency
   end
-  
+
   def morse_unit
     Morsecoder.default_unit
   end
-  
+
   def morse_unit=(millisec)
     Morsecoder.default_unit = millisec
   end
-  
+
   # Private methods
   private
-  
+
   def initialize_serialport(dev)
     require 'serialport'
     @sp = SerialPort.new dev, 38400, 8, 1, SerialPort::NONE
@@ -233,8 +254,8 @@ class Mi100
       @sp.write_timeout = WRITE_TIMEOUT
     end
   end
-  
-  
+
+
   def send_command_get_response(cmd = CMD_PING)
     empty_receive_buffer
     sendln cmd
@@ -249,11 +270,11 @@ class Mi100
     end
     received_line.chomp.split(",")
   end
-  
+
   def sendln str
     @sp.write str + "\n"
   end
-  
+
   def empty_receive_buffer
     @sp.read_timeout = SHORT_READ_TIMEOUT
     begin
@@ -261,7 +282,7 @@ class Mi100
     end while char && char.length > 0
     @sp.read_timeout = READ_TIMEOUT
   end
-  
+
   def receiveln
     if is_windows?
       start_time = Time.now
@@ -282,5 +303,5 @@ class Mi100
   def is_windows?
     os = RUBY_PLATFORM.split("-")[1]
     os == 'mswin' or os == 'bccwin' or os == 'mingw' or os == 'mingw32'
-  end  
+  end
 end
