@@ -74,6 +74,7 @@ class Mi100
       retry unless retries_left < 0
       puts "Bluetooth connection failed."
       raise
+      self.speed
     end
 
   end
