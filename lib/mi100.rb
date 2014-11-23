@@ -29,6 +29,7 @@ class Mi100
   CMD_TURN_LEFT       = "A"
   CMD_SET_SPEED       = "W"
   CMD_FREE_RAM        = "M"
+  CMD_TURN_LED_RGB    = "V"
 
   DEFAULT_SPEED           = 1023
   DEFAULT_MOVE_DURATION   = 300
@@ -76,6 +77,8 @@ class Mi100
       raise
     end
 
+    self.speed
+    self.turn_led 0,0,0
   end
 
   def close
@@ -188,6 +191,10 @@ class Mi100
     g = 100 if g > 100
     b = 100 if b > 100
     send_command_get_response "#{CMD_BLINK_LED},#{r.to_s},#{g.to_s},#{b.to_s},#{duration.to_s}"
+  end
+
+  def turn_led(r = 0, g = 0, b = 0)
+    send_command_get_response "#{CMD_TURN_LED_RGB},#{r.to_s},#{g.to_s},#{b.to_s}"
   end
 
   def stop
