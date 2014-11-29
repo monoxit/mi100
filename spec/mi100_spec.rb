@@ -8,6 +8,8 @@ describe Mi100 do
 
   before :each do
     Mi100.any_instance.stub(:initialize_serialport)
+    Mi100.any_instance.stub(:speed)
+    Mi100.any_instance.stub(:turn_led)
   end
 
   it 'should create the instance' do
@@ -179,6 +181,7 @@ describe Mi100 do
   it 'should send "W,pwm_value" on speed pwm_value' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_SET_SPEED,1234])
     mi100 = Mi100.new "COM5"
+    Mi100.any_instance.unstub(:speed)
     expect(mi100.speed 500).to eq(["W",1234])
     expect(mi100).to have_received(:send_command_get_response).with("W,500")
   end
@@ -186,6 +189,7 @@ describe Mi100 do
   it 'should reset default speed' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_SET_SPEED,1234])
     mi100 = Mi100.new "COM5"
+    Mi100.any_instance.unstub(:speed)
     expect(mi100.speed).to eq(["W",1234])
     expect(mi100).to have_received(:send_command_get_response).with("W,1023")
   end
@@ -197,11 +201,19 @@ describe Mi100 do
     expect(mi100).to have_received(:send_command_get_response).with("M")
   end
 
-  it 'should send "D,100, 50, 50,duration on blink 100,50,50,duration' do
+  it 'should send "D,100,50,50,duration on blink 100,50,50,duration' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_BLINK_LED,1234])
     mi100 = Mi100.new "COM5"
     expect(mi100.blink 100,50,50,100).to eq(["D",1234])
     expect(mi100).to have_received(:send_command_get_response).with("D,100,50,50,100")
+  end
+
+  it 'should send "V,100,0,100 on turn_led 100,0,100' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_TURN_LED_RGB,1234])
+    mi100 = Mi100.new "COM5"
+    Mi100.any_instance.unstub(:turn_led)
+    expect(mi100.turn_led 100,0,100).to eq(["V",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("V,100,0,100")
   end
 
   it 'should send "S" on stop' do
