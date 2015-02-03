@@ -30,10 +30,13 @@ class Mi100
   CMD_SET_SPEED       = "W"
   CMD_FREE_RAM        = "M"
   CMD_TURN_LED_RGB    = "V"
+  CMD_DRIVE           = "Z"
+
 
   DEFAULT_SPEED           = 1023
   DEFAULT_MOVE_DURATION   = 300
   DEFAULT_SPIN_DURATION   = 140
+  DEFAULT_DRIVE_DURATION  = 50
   DEFAULT_BLINK_DURATION  = 600
   DEFAULT_TONE_DURATION   = 300
 
@@ -65,6 +68,7 @@ class Mi100
                 HSI:  988,
               }
 
+
   def initialize(dev)
     retries_left = DEFAULT_RETRIES
     begin
@@ -77,8 +81,7 @@ class Mi100
       raise
     end
 
-    self.speed
-    self.turn_led 0,0,0
+    initialize_robo
   end
 
   def close
@@ -128,11 +131,13 @@ class Mi100
   end
 
   def turn_right(duration)
-    send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
+    response = send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
+    response[1].to_i
   end
 
   def turn_left(duration)
-    send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
+    response = send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
+    response[1].to_i
   end
 
   def movef(duration = DEFAULT_MOVE_DURATION)
@@ -149,6 +154,21 @@ class Mi100
 
   def spinl(duration = DEFAULT_SPIN_DURATION)
     spin_left duration
+  end
+
+  def drive(right_speed, left_speed, duration = @drive_duration)
+    response = send_command_get_response "#{CMD_DRIVE},#{right_speed.to_s},#{left_speed.to_s},#{duration.to_s}"
+    response[1].to_i
+  end
+
+  def drive_right(turn_speed, speed = @speed, duration = @drive_duration)
+    response = send_command_get_response "#{CMD_DRIVE},#{speed.to_s},#{(speed + turn_speed).to_s},#{duration.to_s}"
+    response[1].to_i
+  end
+
+  def drive_left(turn_speed, speed = @speed, duration = @drive_duration)
+    response = send_command_get_response "#{CMD_DRIVE},#{(speed + turn_speed).to_s},#{speed.to_s},#{duration.to_s}"
+    response[1].to_i
   end
 
   def move_forward!(duration)
@@ -175,8 +195,25 @@ class Mi100
     sendln "#{CMD_TURN_LEFT},#{duration.to_s}"
   end
 
+  def drive!(right_speed, left_speed, duration = @drive_duration)
+    sendln "#{CMD_DRIVE},#{right_speed.to_s},#{left_speed.to_s},#{duration.to_s}"
+  end
+
+  def drive_right!(turn_speed, speed = @speed, duration = @drive_duration)
+    sendln "#{CMD_DRIVE},#{speed.to_s},#{(speed + turn_speed).to_s},#{duration.to_s}"
+  end
+
+  def drive_left!(turn_speed, speed = @speed, duration = @drive_duration)
+    sendln "#{CMD_DRIVE},#{(speed + turn_speed).to_s},#{speed.to_s},#{duration.to_s}"
+  end
+
   def speed(pwm_value = DEFAULT_SPEED)
     send_command_get_response "#{CMD_SET_SPEED},#{pwm_value.to_s}"
+    @speed = pwm_value
+  end
+
+  def drive_duration(duration = DEFAULT_DRIVE_DURATION)
+    @drive_duration = duration
   end
 
   def free_ram
@@ -270,6 +307,11 @@ class Mi100
     end
   end
 
+  def initialize_robo
+    self.speed DEFAULT_SPEED
+    self.drive_duration DEFAULT_DRIVE_DURATION
+    self.turn_led 0,0,0
+  end
 
   def send_command_get_response(cmd = CMD_PING)
     empty_receive_buffer
