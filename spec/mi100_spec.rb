@@ -8,8 +8,7 @@ describe Mi100 do
 
   before :each do
     Mi100.any_instance.stub(:initialize_serialport)
-    Mi100.any_instance.stub(:speed)
-    Mi100.any_instance.stub(:turn_led)
+    Mi100.any_instance.stub(:initialize_robo)
   end
 
   it 'should create the instance' do
@@ -38,7 +37,7 @@ describe Mi100 do
     expect(mi100).to have_received(:send_command_get_response).with("P")
   end
 
-  it 'should send "F,duration" on :move with "FORWARD"' do
+  it 'should send "F,duration" on move "FORWARD"' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_MOVE_FORWARD,1234])
     mi100 = Mi100.new "COM5"
     expect(mi100.move "FORWARD").to eq(["F",1234])
@@ -95,16 +94,16 @@ describe Mi100 do
   end
 
   it 'should send "U,duration" on turn_right duration' do
-    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_TURN_RIGHT,1234])
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_TURN_RIGHT,123])
     mi100 = Mi100.new "COM5"
-    expect(mi100.turn_right 500).to eq(["U",1234])
+    expect(mi100.turn_right 500).to eq(["U",123])
     expect(mi100).to have_received(:send_command_get_response).with("U,500")
   end
 
   it 'should send "A,duration" on turn_left duration' do
-    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_TURN_LEFT,1234])
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_TURN_LEFT,123])
     mi100 = Mi100.new "COM5"
-    expect(mi100.turn_left 500).to eq(["A",1234])
+    expect(mi100.turn_left 500).to eq(["A",123])
     expect(mi100).to have_received(:send_command_get_response).with("A,500")
   end
 
@@ -134,6 +133,53 @@ describe Mi100 do
     mi100 = Mi100.new "COM5"
     expect(mi100.spinl).to eq(["L",1234])
     expect(mi100).to have_received(:send_command_get_response).with("L,140")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive right_speed, left_speed, duration' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_DRIVE,1234])
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive 123, 234, 56).to eq(["Z",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("Z,123,234,56")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive right_speed, left_speed' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_DRIVE,1234])
+    mi100 = Mi100.new "COM5"
+    mi100.instance_variable_set(:@drive_duration, Mi100::DEFAULT_DRIVE_DURATION)
+    expect(mi100.drive 123, 234).to eq(["Z",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("Z,123,234,50")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_right turn_speed, speed, duration' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_DRIVE,1234])
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive_right 111, 123, 56).to eq(["Z",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("Z,123,234,56")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_right turn_speed' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_DRIVE,1234])
+    mi100 = Mi100.new "COM5"
+    mi100.instance_variable_set(:@speed, 123)
+    mi100.instance_variable_set(:@drive_duration, Mi100::DEFAULT_DRIVE_DURATION)
+    expect(mi100.drive_right 111).to eq(["Z",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("Z,123,234,50")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_left turn_speed, speed, duration' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_DRIVE,1234])
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive_left 111, 123, 56).to eq(["Z",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("Z,234,123,56")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_left turn_speed' do
+    Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_DRIVE,1234])
+    mi100 = Mi100.new "COM5"
+    mi100.instance_variable_set(:@speed, 123)
+    mi100.instance_variable_set(:@drive_duration, Mi100::DEFAULT_DRIVE_DURATION)
+    expect(mi100.drive_left 111).to eq(["Z",1234])
+    expect(mi100).to have_received(:send_command_get_response).with("Z,234,123,50")
   end
 
   it 'should send "F,duration" on move_forward! duration in async (via sendln)' do
@@ -178,10 +224,56 @@ describe Mi100 do
     expect(mi100).to have_received(:sendln).with("A,500")
   end
 
+  it 'should send "Z,right_speed,left_speed,duration" on drive! right_speed, left_speed, duration in async' do
+    Mi100.any_instance.stub(:sendln => 6)
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive! 123, 234, 56).to eq(6)
+    expect(mi100).to have_received(:sendln).with("Z,123,234,56")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive! right_speed, left_speed in async' do
+    Mi100.any_instance.stub(:sendln => 6)
+    mi100 = Mi100.new "COM5"
+    mi100.instance_variable_set(:@drive_duration, Mi100::DEFAULT_DRIVE_DURATION)
+    expect(mi100.drive! 123, 234).to eq(6)
+    expect(mi100).to have_received(:sendln).with("Z,123,234,50")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_right! turn_speed, speed, duration in async' do
+    Mi100.any_instance.stub(:sendln => 6)
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive_right! 111, 123, 56).to eq(6)
+    expect(mi100).to have_received(:sendln).with("Z,123,234,56")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_right! turn_speed in async' do
+    Mi100.any_instance.stub(:sendln => 6)
+    mi100 = Mi100.new "COM5"
+    mi100.instance_variable_set(:@speed, 123)
+    mi100.instance_variable_set(:@drive_duration, Mi100::DEFAULT_DRIVE_DURATION)
+    expect(mi100.drive_right! 111).to eq(6)
+    expect(mi100).to have_received(:sendln).with("Z,123,234,50")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_left! turn_speed, speed, duration in async' do
+    Mi100.any_instance.stub(:sendln => 6)
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive_left! 111, 123, 56).to eq(6)
+    expect(mi100).to have_received(:sendln).with("Z,234,123,56")
+  end
+
+  it 'should send "Z,right_speed,left_speed,duration" on drive_left! turn_speed in async' do
+    Mi100.any_instance.stub(:sendln => 6)
+    mi100 = Mi100.new "COM5"
+    mi100.instance_variable_set(:@speed, 123)
+    mi100.instance_variable_set(:@drive_duration, Mi100::DEFAULT_DRIVE_DURATION)
+    expect(mi100.drive_left! 111).to eq(6)
+    expect(mi100).to have_received(:sendln).with("Z,234,123,50")
+  end
+
   it 'should send "W,pwm_value" on speed pwm_value' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_SET_SPEED,1234])
     mi100 = Mi100.new "COM5"
-    Mi100.any_instance.unstub(:speed)
     expect(mi100.speed 500).to eq(["W",1234])
     expect(mi100).to have_received(:send_command_get_response).with("W,500")
   end
@@ -189,9 +281,13 @@ describe Mi100 do
   it 'should reset default speed' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_SET_SPEED,1234])
     mi100 = Mi100.new "COM5"
-    Mi100.any_instance.unstub(:speed)
-    expect(mi100.speed).to eq(["W",1234])
+    expect(mi100.speed Mi100::DEFAULT_SPEED).to eq(["W",1234])
     expect(mi100).to have_received(:send_command_get_response).with("W,1023")
+  end
+
+  it 'should set drive_duration to 56mS' do
+    mi100 = Mi100.new "COM5"
+    expect(mi100.drive_duration 56).to eq(mi100.instance_variable_get(:@drive_duration))
   end
 
   it 'should send "M" and get free ram memory area on :free_ram' do
@@ -201,17 +297,16 @@ describe Mi100 do
     expect(mi100).to have_received(:send_command_get_response).with("M")
   end
 
-  it 'should send "D,100,50,50,duration on blink 100,50,50,duration' do
+  it 'should send "D,100,50,50,duration" on blink 100,50,50,duration' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_BLINK_LED,1234])
     mi100 = Mi100.new "COM5"
     expect(mi100.blink 100,50,50,100).to eq(["D",1234])
     expect(mi100).to have_received(:send_command_get_response).with("D,100,50,50,100")
   end
 
-  it 'should send "V,100,0,100 on turn_led 100,0,100' do
+  it 'should send "V,100,0,100" on turn_led 100,0,100' do
     Mi100.any_instance.stub(:send_command_get_response => [Mi100::CMD_TURN_LED_RGB,1234])
     mi100 = Mi100.new "COM5"
-    Mi100.any_instance.unstub(:turn_led)
     expect(mi100.turn_led 100,0,100).to eq(["V",1234])
     expect(mi100).to have_received(:send_command_get_response).with("V,100,0,100")
   end

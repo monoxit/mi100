@@ -131,13 +131,11 @@ class Mi100
   end
 
   def turn_right(duration)
-    response = send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
-    response[1].to_i
+    send_command_get_response "#{CMD_TURN_RIGHT},#{duration.to_s}"
   end
 
   def turn_left(duration)
-    response = send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
-    response[1].to_i
+    send_command_get_response "#{CMD_TURN_LEFT},#{duration.to_s}"
   end
 
   def movef(duration = DEFAULT_MOVE_DURATION)
@@ -157,18 +155,15 @@ class Mi100
   end
 
   def drive(right_speed, left_speed, duration = @drive_duration)
-    response = send_command_get_response "#{CMD_DRIVE},#{right_speed.to_s},#{left_speed.to_s},#{duration.to_s}"
-    response[1].to_i
+    send_command_get_response "#{CMD_DRIVE},#{right_speed.to_s},#{left_speed.to_s},#{duration.to_s}"
   end
 
   def drive_right(turn_speed, speed = @speed, duration = @drive_duration)
-    response = send_command_get_response "#{CMD_DRIVE},#{speed.to_s},#{(speed + turn_speed).to_s},#{duration.to_s}"
-    response[1].to_i
+    send_command_get_response "#{CMD_DRIVE},#{speed.to_s},#{(speed + turn_speed).to_s},#{duration.to_s}"
   end
 
   def drive_left(turn_speed, speed = @speed, duration = @drive_duration)
-    response = send_command_get_response "#{CMD_DRIVE},#{(speed + turn_speed).to_s},#{speed.to_s},#{duration.to_s}"
-    response[1].to_i
+    send_command_get_response "#{CMD_DRIVE},#{(speed + turn_speed).to_s},#{speed.to_s},#{duration.to_s}"
   end
 
   def move_forward!(duration)
@@ -208,8 +203,8 @@ class Mi100
   end
 
   def speed(pwm_value = DEFAULT_SPEED)
-    send_command_get_response "#{CMD_SET_SPEED},#{pwm_value.to_s}"
     @speed = pwm_value
+    send_command_get_response "#{CMD_SET_SPEED},#{pwm_value.to_s}"
   end
 
   def drive_duration(duration = DEFAULT_DRIVE_DURATION)
