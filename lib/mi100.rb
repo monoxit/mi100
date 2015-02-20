@@ -197,6 +197,14 @@ class Mi100
     send_command_get_response "#{CMD_TURN_LED_RGB},#{r.to_s},#{g.to_s},#{b.to_s}"
   end
 
+  def led_on
+    turn_led(100,100,100)
+  end
+  
+  def led_off
+    turn_led(0,0,0)
+  end
+  
   def stop
     send_command_get_response CMD_STOP
   end
