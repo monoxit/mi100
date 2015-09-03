@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["silkycove@gmail.com"]
   spec.description   = %q{A ruby gem for controlling MI100 of monoxit through bluetooth virtual serial port.}
   spec.summary       = %q{A ruby gem for controlling MI100}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/monoxit/mi100"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
@@ -21,4 +21,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
+  
+  spec.add_dependency = "rubyserial"
 end

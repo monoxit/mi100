@@ -33,7 +33,7 @@ class Mi100
   CMD_DRIVE           = "Z"
 
 
-  DEFAULT_SPEED           = 1023
+  DEFAULT_SPEED           = 255
   DEFAULT_MOVE_DURATION   = 300
   DEFAULT_SPIN_DURATION   = 140
   DEFAULT_DRIVE_DURATION  = 50
@@ -302,12 +302,8 @@ class Mi100
   private
 
   def initialize_serialport(dev)
-    require 'serialport'
-    @sp = SerialPort.new dev, 38400, 8, 1, SerialPort::NONE
-    if is_windows?
-      @sp.read_timeout = READ_TIMEOUT
-      @sp.write_timeout = WRITE_TIMEOUT
-    end
+    require 'rubyserial'
+    @sp = Serial.new dev, 9600
   end
 
   def initialize_robo
@@ -336,32 +332,13 @@ class Mi100
   end
 
   def empty_receive_buffer
-    @sp.read_timeout = SHORT_READ_TIMEOUT
     begin
-      char = @sp.read 1
+      char = @sp.getbyte
     end while char && char.length > 0
-    @sp.read_timeout = READ_TIMEOUT
   end
 
   def receiveln
-    if is_windows?
-      start_time = Time.now
-      str = ""
-      while (Time.now - start_time) * 1000.0 < READ_TIMEOUT do
-        char = @sp.read 1
-        if char.length > 0
-          str += char
-          break if char == "\n"
-        end
-      end
-    else
-      str = @sp.gets
-    end
-    str
+    @sp.gets
   end
 
-  def is_windows?
-    os = RUBY_PLATFORM.split("-")[1]
-    os == 'mswin' or os == 'bccwin' or os == 'mingw' or os == 'mingw32'
-  end
 end
