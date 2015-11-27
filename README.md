@@ -22,7 +22,7 @@ Or install it yourself as:
 Pairing must be performed between a *Bluetooth* wireless technology enabled device and MI100 in advance.  
 The below example shows that pairing is done between a Windows device and MI100, and the virtual serial port is COM12.  
 
-	require 'serialport' #hybridgroup-serialport
+	require 'rubyserial'
 	require 'mi100'
 	
 	mi100 = Mi100.new 'COM12'
