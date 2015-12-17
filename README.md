@@ -1,6 +1,7 @@
 # Mi100
 
 Controlling your Bluetooth<sup>&reg;</sup> wireless technology embedded robot MI100 of MONOxIT.
+The version >=1.0.0 uses RubyFFI based rubyserial gem written by Hybridgroup.
 
 ## Installation
 
